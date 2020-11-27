@@ -2,6 +2,7 @@
 #include <cstring>
 #include <vector>
 #include <iomanip>
+#include <fstream>
 
 using namespace std;
 
@@ -11,37 +12,39 @@ struct Student {
   char last[20];
   int id;
   float gpa;
+  Student* next = NULL;
 };
 
-//Node struct - holds pointer to next node and student
-struct Node {
-  Node* next;
-  Student student;
-};
-
-
-//function declaration - note that add and delete pass the vector by reference,\
- to make permanent changes
-void addStudent(Node (&hashTable)[100]);
-void printStudents(Node hashTable[100]);
-void deleteStudent(Node (&hashTable)[100]);
+//function declaration - note that add and delete pass by reference, to make permanent changes
+void generate(int num, Student* hashTable[], int length);
+void addStudent(Student* hashTable[]);
+void printStudents(Student* hashTable[], int length);
+void deleteStudent(Student* hashTable[]);
 
 int main() {
 
   cout << "Welcome to Student List - Hash Table version!" << endl;
-  cout << "Valid commands are \"ADD\", \"PRINT\", \"DELETE\", and \"QUIT\"" << endl;
-  
-  Node hashTable[100];
+  cout << "Valid commands are \"GENERATE\", \"ADD\", \"PRINT\", \"DELETE\", and \"QUIT\"" << endl;
 
+  Student* hashTable[100];
+  for (int i = 0; i < 100; i++) {
+    hashTable[i] = NULL;
+  }
+  
   char input[10];
   //as long as the user doesn't say QUIT, keep asking for commands
   while (strcmp(input, "QUIT") != 0) {
     cout << ">> ";
     cin >> input;
-    if (strcmp(input, "ADD") == 0) {
+    if (strcmp(input, "GENERATE") == 0) {
+      int num;
+      cout << "How many students to generate? ";
+      cin >> num;
+      generate(num, hashTable, sizeof(hashTable) / sizeof(hashTable[0]));
+    } else if (strcmp(input, "ADD") == 0) {
       addStudent(hashTable);
     } else if (strcmp(input, "PRINT") == 0) {
-      printStudents(hashTable);
+      printStudents(hashTable, sizeof(hashTable) / sizeof(hashTable[0]));
     } else if (strcmp(input, "DELETE") == 0) {
       deleteStudent(hashTable);
     } else if (strcmp(input, "HELP") == 0) { //HELP tells them valid commands
@@ -54,49 +57,74 @@ l be invalid
   cout << "Goodbye!" << endl;
 }
 
-//add a new student to the vector, prompting for the necesary components
-void addStudent(Node (&hashTable)[100]) {
-  Student newStudent;
-  cout << "First name: ";
-  cin >> newStudent.first;
-  cout << "Last name: ";
-  cin >> newStudent.last;
-  cout << "ID: ";
-  cin >> newStudent.id;
-  cout << "GPA: ";
-  cin >> newStudent.gpa;
+//generates a set of random students
+void generate(int numStudents, Student* hashTable[], int length) {
+  Student* students[20];
+  ifstream firstNames;
+  ifstream lastNames;
+  srand(time(0));
+  firstNames.open("firstNames.txt");
+  lastNames.open("lastNames.txt");
+  if (!firstNames) {
+    cout << "Could not open firstNames.txt" << endl;
+    exit(1);
+  }
+  if (!lastNames) {
+    cout << "Could not open lastNames.txt" << endl;
+    exit(1);
+  }
 
-  hashTable[id % 100].student = newStudent;
+  char name[20];
+  int total = 0;
+  while (firstNames >> name) {
+    strcpy(students[total]->first, name);
+    total += 1;
+  }
+  total = 0;
+  while (lastNames >> name) {
+    strcpy(students[total]->last, name);
+    total += 1;
+  }
+
+  int currentID = 1;
+  for (int i = 0; i < numStudents; i++) {
+    float randomGPA = static_cast<float> (rand()) / static_cast<float> (RAND_MAX/4);
+    int random = rand() % total;
+    hashTable[currentID % length] = students[random];
+    hashTable[currentID % length]->id = currentID;
+    hashTable[currentID % length]->gpa = randomGPA;
+    currentID++;
+  } 
+}
+
+//add a new student to the vector, prompting for the necesary components
+void addStudent(Student* hashTable[]) {
+  Student* newStudent = new Student;
+  cout << "First name: ";
+  cin >> newStudent->first;
+  cout << "Last name: ";
+  cin >> newStudent->last;
+  cout << "ID: ";
+  cin >> newStudent->id;
+  cout << "GPA: ";
+  cin >> newStudent->gpa;
+
+  hashTable[newStudent->id % 100] = newStudent;
   cout << "Student added." << endl;
 }
 
 //print out all the information for each student, or "[No students]" if no stud\
 ents
-void printStudents(Node hashTable[100]) {
-  for (int i = 0; i < vPtr->size(); i++) {
-    Student* s = vPtr->at(i);
-    cout << s->first << " " << s->last << ", " << s->id << ", " << fixed << set\
-precision(2) << s->gpa << endl;
-  }
-  if (vPtr->size() == 0) {
-    cout << "[No students]" << endl;
+void printStudents(Student* hashTable[], int length) {
+  for (int i = 0; i < length; i++) {
+    if (hashTable[i] != NULL) {
+      cout << hashTable[i]->first << " " << hashTable[i]->last << ", " << hashTable[i]->id << ", " << fixed << setprecision(2) << hashTable[i]->gpa << endl;
+    }
   }
 }
 
 //deletes a student given their ID
-void deleteStudent(Node (&hashTable)[100]) {
-  int toDelete;
-  cout << "ID: ";
-  cin >> toDelete;
+void deleteStudent(Student* hashTable[]) {
 
-  //search through the vector to find the matching ID
-  for (int i = 0; i < vPtr->size(); i++) {
-    if (vPtr->at(i)->id == toDelete) {
-      vPtr->erase(vPtr->begin() + i);
-      cout << "Student deleted." << endl;
-      return;
-    }
-  }
-  cout << "Student not found." << endl; //if it went through all the students w\
-/out deleting, say not found
+
 }
