@@ -19,7 +19,7 @@ struct Student {
 void generate(int num, Student* hashTable[], int length);
 void addStudent(Student* hashTable[]);
 void printStudents(Student* hashTable[], int length);
-void deleteStudent(Student* hashTable[]);
+void deleteStudent(Student* hashTable[], int length);
 
 int main() {
 
@@ -46,12 +46,10 @@ int main() {
     } else if (strcmp(input, "PRINT") == 0) {
       printStudents(hashTable, sizeof(hashTable) / sizeof(hashTable[0]));
     } else if (strcmp(input, "DELETE") == 0) {
-      deleteStudent(hashTable);
-    } else if (strcmp(input, "HELP") == 0) { //HELP tells them valid commands
-      cout << "Valid commands: ADD, PRINT, DELETE, HELP, QUIT" << endl;
+      deleteStudent(hashTable, sizeof(hashTable) / sizeof(hashTable[0]));
     } else if (strcmp(input, "QUIT") != 0) { //anything else (besides quit) wil\
 l be invalid
-      cout << "Invalid command. Type HELP for list of valid commands." << endl;
+      cout << "Invalid command." << endl;
     }
   }
   cout << "Goodbye!" << endl;
@@ -59,10 +57,14 @@ l be invalid
 
 //generates a set of random students
 void generate(int numStudents, Student* hashTable[], int length) {
-  Student* students[20];
+  Student* students[20]; //will hold the 20 random names
+  for (int i = 0; i < 20; i++) {
+    students[i] = new Student;
+  }
   ifstream firstNames;
   ifstream lastNames;
   srand(time(0));
+  
   firstNames.open("firstNames.txt");
   lastNames.open("lastNames.txt");
   if (!firstNames) {
@@ -89,8 +91,11 @@ void generate(int numStudents, Student* hashTable[], int length) {
   int currentID = 1;
   for (int i = 0; i < numStudents; i++) {
     float randomGPA = static_cast<float> (rand()) / static_cast<float> (RAND_MAX/4);
-    int random = rand() % total;
-    hashTable[currentID % length] = students[random];
+    int randomFirst = rand() % total;
+    int randomLast = rand() % total;
+    hashTable[currentID % length] = new Student;
+    strcpy(hashTable[currentID % length]->first, students[randomFirst]->first);
+    strcpy(hashTable[currentID % length]->last, students[randomLast]->last);
     hashTable[currentID % length]->id = currentID;
     hashTable[currentID % length]->gpa = randomGPA;
     currentID++;
@@ -109,7 +114,17 @@ void addStudent(Student* hashTable[]) {
   cout << "GPA: ";
   cin >> newStudent->gpa;
 
-  hashTable[newStudent->id % 100] = newStudent;
+  if (!hashTable[newStudent->id % 100]) {
+    hashTable[newStudent->id % 100] = newStudent;
+  } else { //TODO: move current definition out?
+    Student* current = hashTable[newStudent->id % 100];
+    int length = 1;
+    while (current->next) {
+      current = current->next;
+      length++;
+    }
+    current->next = newStudent;
+  }
   cout << "Student added." << endl;
 }
 
@@ -117,14 +132,40 @@ void addStudent(Student* hashTable[]) {
 ents
 void printStudents(Student* hashTable[], int length) {
   for (int i = 0; i < length; i++) {
-    if (hashTable[i] != NULL) {
-      cout << hashTable[i]->first << " " << hashTable[i]->last << ", " << hashTable[i]->id << ", " << fixed << setprecision(2) << hashTable[i]->gpa << endl;
+    Student* current = hashTable[i];
+    if (current) {
+      cout << current->first << " " << current->last << ", " << current->id << ", " << fixed << setprecision(2) << current->gpa << endl;
+      while (current->next) {
+	current = current->next;
+	cout << current->first << " " << current->last << ", " << current->id << ", " << fixed << setprecision(2) << current->gpa << endl;
+      }
     }
   }
 }
 
 //deletes a student given their ID
-void deleteStudent(Student* hashTable[]) {
+void deleteStudent(Student* &hashTable[], int length) {
+  int givenID;
+  cout << "ID of student: ";
+  cin >> givenID;
+  
+  for (int i = 0; i < length; i++) {
+    if (hashTable[i] && hashTable[i]->id == givenID) {
+      hashTable[i] = NULL;
+      break;
+    }
+  }
+}
 
+//rehashes the function with double the size of the array
+void rehash(Student* &hashTable[], int length) {
+  Student* newTable[length * 2];
+  for (int i = 0; i < length * 2; i++) {
+    newTable[i] = NULL;
+  }
 
+  for (int i = 0; i < length; i++) {
+    Student* current = hashTable[i];
+    
+  }
 }
