@@ -178,9 +178,12 @@ void deleteStudent(Student** &hashTable, int &length) {
 
   bool flag = false;
   for (int i = 0; i < length; i++) {
+    cout << i << endl;
     Student* current = hashTable[i];
-    if (current && current->id == givenID && !current->next) {
-      current = NULL;
+    if (current && current->id == givenID) {
+      Student* temp = current->next;
+      delete current;
+      hashTable[i] = temp;
       break;
     }
     while (current && current->next) {
@@ -191,6 +194,7 @@ void deleteStudent(Student** &hashTable, int &length) {
 	flag = true;
 	break;
       }
+      current = current->next;
     }
     if (flag) {
       break;
