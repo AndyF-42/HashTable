@@ -17,7 +17,7 @@ struct Student {
 
 //function declaration - note that add and delete pass by reference, to make permanent changes
 void generate(int num, Student** &hashTable, int &length);
-void addStudent(Student** &hashTable, int &length);
+void addStudent(Student* newStudent, Student** &hashTable, int &length);
 void printStudents(Student* hashTable[], int length);
 void deleteStudent(Student** &hashTable, int &length);
 void rehash(Student** &hashTable, int &length);
@@ -44,7 +44,16 @@ int main() {
       cin >> num;
       generate(num, hashTable, size);
     } else if (strcmp(input, "ADD") == 0) {
-      addStudent(hashTable, size);
+      Student* newStudent = new Student;
+      cout << "First name: ";
+      cin >> newStudent->first;
+      cout << "Last name: ";
+      cin >> newStudent->last;
+      cout << "ID: ";
+      cin >> newStudent->id;
+      cout << "GPA: ";
+      cin >> newStudent->gpa;
+      addStudent(newStudent, hashTable, size);
       cout << "Size: " << size << endl;;
     } else if (strcmp(input, "PRINT") == 0) {
       printStudents(hashTable, size);
@@ -127,17 +136,7 @@ void generate(int numStudents, Student** &hashTable, int &length) {
 }
 
 //add a new student to the vector, prompting for the necesary components
-void addStudent(Student** &hashTable, int &length) {
-  Student* newStudent = new Student;
-  cout << "First name: ";
-  cin >> newStudent->first;
-  cout << "Last name: ";
-  cin >> newStudent->last;
-  cout << "ID: ";
-  cin >> newStudent->id;
-  cout << "GPA: ";
-  cin >> newStudent->gpa;
-
+void addStudent(Student* newStudent, Student** &hashTable, int &length) {
   if (!hashTable[newStudent->id % length]) {
     hashTable[newStudent->id % length] = newStudent;
   } else { //TODO: move current definition out?
@@ -148,7 +147,7 @@ void addStudent(Student** &hashTable, int &length) {
       chainLength++;
     }
     current->next = newStudent;
-    if (chainLength >= 3) { //rehash if more than 3 collisions in this slot
+    if (chainLength == 3) { //rehash if more than 3 collisions in this slot
       rehash(hashTable, length);
     }
   }
@@ -176,10 +175,24 @@ void deleteStudent(Student** &hashTable, int &length) {
   int givenID;
   cout << "ID of student: ";
   cin >> givenID;
-  
+
+  bool flag = false;
   for (int i = 0; i < length; i++) {
-    if (hashTable[i] && hashTable[i]->id == givenID) {
-      hashTable[i] = NULL;
+    Student* current = hashTable[i];
+    if (current && current->id == givenID && !current->next) {
+      current = NULL;
+      break;
+    }
+    while (current && current->next) {
+      if (current->next->id == givenID) {
+        Student* temp = current->next;
+	current->next = current->next->next;
+	delete temp;
+	flag = true;
+	break;
+      }
+    }
+    if (flag) {
       break;
     }
   }
@@ -187,28 +200,45 @@ void deleteStudent(Student** &hashTable, int &length) {
 
 //rehashes the function with double the size of the array
 void rehash(Student** &hashTable, int &length) {
-  Student** newTable = new Student*[length * 2];
-  for (int i = 0; i < length * 2; i++) {
+  length *= 2;
+  Student** newTable = new Student*[length];
+  for (int i = 0; i < length; i++) {
     newTable[i] = NULL;
   }
 
   cout << "ok man, length: " << length << endl;
-  for (int i = 0; i < length; i++) {
-    Student* current = hashTable[i];
-    if (current) {
-      newTable[current->id % (length * 2)] = current;
+  for (int i = 0; i < length / 2; i++) {
+    
+    if (hashTable[i]) {
+      Student* original = new Student;
+      strcpy(original->first, hashTable[i]->first);
+      strcpy(original->last, hashTable[i]->last);
+      original->id = hashTable[i]->id;
+      original->gpa = hashTable[i]->gpa;
+      original->next = hashTable[i]->next;
+      
+      addStudent(hashTable[i], newTable, length);
+      newTable[original->id % length]->next = NULL;
       cout << "1" << endl;
-      while (current->next) { //TODO - call ADD function and in main for ADD get the cin stuff
+      while (original->next) { //TODO - call ADD function and in main for ADD get the cin stuff
 	cout << "ape" << endl;
-	current = current->next;
-	cout << current->id % (length * 2) << endl;
-	newTable[current->id % (length * 2)] = current;
+	original = original->next;
+	Student* current = new Student;
+	strcpy(current->first, original->first);
+        strcpy(current->last, original->last);
+        current->id = original->id;
+        current->gpa = original->gpa;
+        current->next = NULL;
+        
+	cout << current->id % length << endl;
+	addStudent(current, newTable, length);
+	printStudents(newTable, length);
       }
       cout << "2" << endl;
+      printStudents(newTable, length);
     }
   }
   cout << "Cool" << endl;
 
-  length *= 2;
   hashTable = newTable;
 }
